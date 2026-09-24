@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach, afterEach } from "vitest";
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import { loadHooks } from "../src/core/hooks/loader.js";
 import { loadInstructions } from "../src/core/instructions.js";
@@ -9,19 +9,19 @@ import { listInstalledSkills } from "../src/core/skills/manager.js";
 // Regression tests for SOULFORGE_NO_CLAUDE=1 (clean launch: no .claude
 // hooks, skills, or instructions merge/load).
 
-const root = join(tmpdir(), `soulforge-no-claude-${Date.now()}`);
+const root = mkdtempSync(join(tmpdir(), "soulforge-no-claude-"));
 const projectDir = join(root, "proj");
 const fakeHome = join(root, "home");
 
 function write(rel: string, content: string) {
   const full = join(projectDir, rel);
-  mkdirSync(full.replace(/\/[^/]+$/, ""), { recursive: true });
+  mkdirSync(dirname(full), { recursive: true });
   writeFileSync(full, content);
 }
 
 function writeHome(rel: string, content: string) {
   const full = join(fakeHome, rel);
-  mkdirSync(full.replace(/\/[^/]+$/, ""), { recursive: true });
+  mkdirSync(dirname(full), { recursive: true });
   writeFileSync(full, content);
 }
 
@@ -44,7 +44,7 @@ describe("SOULFORGE_NO_CLAUDE hooks", () => {
   test("without flag: .claude hooks load", () => {
     delete process.env.SOULFORGE_NO_CLAUDE;
     write(".claude/settings.json", JSON.stringify({ hooks: { PreToolUse: [{ matcher: "Bash", hooks: [{ type: "command", command: "echo claude" }] }] } }));
-    const hooks = loadHooks(projectDir, { homeDir: fakeHome });
+    const hooks = loadHooks(projectDir, fakeHome);
     expect(hooks.PreToolUse).toHaveLength(1);
   });
 
@@ -53,7 +53,7 @@ describe("SOULFORGE_NO_CLAUDE hooks", () => {
     write(".claude/settings.json", JSON.stringify({ hooks: { PreToolUse: [{ matcher: "Bash", hooks: [{ type: "command", command: "echo claude" }] }] } }));
     write(".claude/settings.local.json", JSON.stringify({ hooks: { PreToolUse: [{ matcher: "Bash", hooks: [{ type: "command", command: "echo local" }] }] } }));
     write(".soulforge/config.json", JSON.stringify({ hooks: { PreToolUse: [{ matcher: "Edit", hooks: [{ type: "command", command: "echo sf" }] }] } }));
-    const hooks = loadHooks(projectDir, { homeDir: fakeHome });
+    const hooks = loadHooks(projectDir, fakeHome);
     expect(hooks.PreToolUse).toHaveLength(1);
     expect(hooks.PreToolUse![0].matcher).toBe("Edit");
   });
@@ -61,7 +61,7 @@ describe("SOULFORGE_NO_CLAUDE hooks", () => {
   test("with flag: home .claude/settings.json skipped", () => {
     process.env.SOULFORGE_NO_CLAUDE = "1";
     writeHome(".claude/settings.json", JSON.stringify({ hooks: { PreToolUse: [{ matcher: "Bash", hooks: [{ type: "command", command: "echo home" }] }] } }));
-    const hooks = loadHooks(projectDir, { homeDir: fakeHome });
+    const hooks = loadHooks(projectDir, fakeHome);
     expect(hooks.PreToolUse).toBeUndefined();
   });
 });
@@ -99,7 +99,7 @@ describe("SOULFORGE_NO_CLAUDE skills", () => {
   test("without flag: .claude skills listed", () => {
     delete process.env.SOULFORGE_NO_CLAUDE;
     seedSkills();
-    const names = listInstalledSkills({ cwd: projectDir }).map((s) => s.name);
+    const names = listInstalledSkills(projectDir).map((s) => s.name);
     expect(names).toContain("foo");
     expect(names).toContain("bar");
   });
@@ -107,7 +107,7 @@ describe("SOULFORGE_NO_CLAUDE skills", () => {
   test("with flag: .claude skills skipped, soulforge kept", () => {
     process.env.SOULFORGE_NO_CLAUDE = "1";
     seedSkills();
-    const names = listInstalledSkills({ cwd: projectDir }).map((s) => s.name);
+    const names = listInstalledSkills(projectDir).map((s) => s.name);
     expect(names).not.toContain("foo");
     expect(names).toContain("bar");
   });

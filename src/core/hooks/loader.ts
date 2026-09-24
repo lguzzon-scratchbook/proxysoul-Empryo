@@ -21,23 +21,15 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import type { HookEventName, HookRule, HooksConfig } from "./types.js";
 
-export function isClaudeCompatDisabled(): boolean {
-  return process.env.SOULFORGE_NO_CLAUDE === "1";
-}
-
-function getHookPaths(cwd: string, opts?: { homeDir?: string }): string[] {
-  const home = opts?.homeDir ?? homedir();
-  const soulforgePaths = [
-    join(home, ".soulforge", "config.json"),
-    join(cwd, ".soulforge", "config.json"),
-  ];
-  if (isClaudeCompatDisabled()) return soulforgePaths;
+function getHookPaths(cwd: string, homeDir?: string): string[] {
+  const home = homeDir ?? homedir();
   return [
     join(home, ".claude", "settings.json"),
     join(cwd, ".claude", "settings.json"),
     join(cwd, ".claude", "settings.local.json"),
-    ...soulforgePaths,
-  ];
+    join(home, ".soulforge", "config.json"),
+    join(cwd, ".soulforge", "config.json"),
+  ].filter((p) => process.env.SOULFORGE_NO_CLAUDE !== "1" || !p.includes(".claude"));
 }
 
 interface SettingsFile {
@@ -62,8 +54,8 @@ function readSettingsFile(filePath: string): SettingsFile | null {
  * Returns a merged HooksConfig where each event has all rules from all sources.
  * Returns empty config if any source sets `disableAllHooks: true`.
  */
-export function loadHooks(cwd: string, opts?: { homeDir?: string }): HooksConfig {
-  const paths = getHookPaths(cwd, opts);
+export function loadHooks(cwd: string, homeDir?: string): HooksConfig {
+  const paths = getHookPaths(cwd, homeDir);
   const merged: Record<string, HookRule[]> = {};
 
   for (const path of paths) {

@@ -122,27 +122,25 @@ export async function installSkill(
 
 /** Scan known directories for installed SKILL.md files.
  * Set SOULFORGE_NO_CLAUDE=1 to skip ~/.claude/skills and .claude/skills. */
-export function listInstalledSkills(opts?: { cwd?: string }): InstalledSkill[] {
+export function listInstalledSkills(cwd?: string): InstalledSkill[] {
   const byName = new Map<string, InstalledSkill>();
   const seenPaths = new Set<string>();
 
   // Skill scan dirs are fixed per guidelines: ~/.soulforge/skills,
   // ~/.agents/skills, ~/.claude/skills + project-local equivalents.
   // Do not broaden scope.
-  const projectRoot = opts?.cwd ?? getCwd();
-  const skipClaude = process.env.SOULFORGE_NO_CLAUDE === "1";
-  const dirs: Array<{ path: string; scope: "global" | "project" }> = [
-    { path: join(homedir(), ".soulforge", "skills"), scope: "global" },
-    { path: join(homedir(), ".agents", "skills"), scope: "global" },
-    ...(!skipClaude
-      ? [{ path: join(homedir(), ".claude", "skills"), scope: "global" as const }]
-      : []),
-    { path: join(projectRoot, ".soulforge", "skills"), scope: "project" },
-    { path: join(projectRoot, ".agents", "skills"), scope: "project" },
-    ...(!skipClaude
-      ? [{ path: join(projectRoot, ".claude", "skills"), scope: "project" as const }]
-      : []),
+  const projectRoot = cwd ?? getCwd();
+  const home = homedir();
+  const allDirs: Array<{ path: string; scope: "global" | "project"; claude: boolean }> = [
+    { path: join(home, ".soulforge", "skills"), scope: "global", claude: false },
+    { path: join(home, ".agents", "skills"), scope: "global", claude: false },
+    { path: join(home, ".claude", "skills"), scope: "global", claude: true },
+    { path: join(projectRoot, ".soulforge", "skills"), scope: "project", claude: false },
+    { path: join(projectRoot, ".agents", "skills"), scope: "project", claude: false },
+    { path: join(projectRoot, ".claude", "skills"), scope: "project", claude: true },
   ];
+  const noClaude = process.env.SOULFORGE_NO_CLAUDE === "1";
+  const dirs = allDirs.filter((d) => !d.claude || !noClaude);
 
   for (const dir of dirs) {
     try {

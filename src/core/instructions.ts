@@ -173,8 +173,8 @@ export function loadInstructions(
   const enabled = new Set(
     enabledIds ?? INSTRUCTION_SOURCES.filter((s) => s.defaultEnabled).map((s) => s.id),
   );
-  // SOULFORGE_NO_CLAUDE=1 forces SoulForge-only instructions even when the
-  // caller explicitly enables the claude source (clean launch).
+  // Clean launch: force SoulForge-only instructions even when the caller
+  // explicitly enables the claude source.
   if (process.env.SOULFORGE_NO_CLAUDE === "1") enabled.delete("claude");
 
   const results: LoadedInstruction[] = [];
