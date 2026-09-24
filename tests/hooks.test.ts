@@ -108,6 +108,10 @@ describe("matchesToolName", () => {
 
 describe("loadHooks", () => {
   const testDir = join(tmpdir(), `soulforge-hooks-test-${Date.now()}`);
+  // Isolated fake HOME so real ~/.soulforge/config.json and
+  // ~/.claude/settings.json never pollute counts.
+  const fakeHome = join(tmpdir(), `soulforge-hooks-home-${Date.now()}`);
+  mkdirSync(fakeHome, { recursive: true });
 
   function setup(files: Record<string, unknown>) {
     for (const [relPath, content] of Object.entries(files)) {
@@ -139,7 +143,7 @@ describe("loadHooks", () => {
       },
     });
 
-    const hooks = loadHooks(testDir);
+    const hooks = loadHooks(testDir, { homeDir: fakeHome });
     expect(hooks.PreToolUse).toHaveLength(1);
     expect(hooks.PreToolUse![0].matcher).toBe("Bash");
     expect(hooks.PreToolUse![0].hooks).toHaveLength(1);
@@ -166,7 +170,7 @@ describe("loadHooks", () => {
       },
     });
 
-    const hooks = loadHooks(testDir);
+    const hooks = loadHooks(testDir, { homeDir: fakeHome });
     expect(hooks.PreToolUse).toHaveLength(2);
     expect(hooks.PreToolUse![0].matcher).toBe("Bash");
     expect(hooks.PreToolUse![1].matcher).toBe("Edit");
@@ -176,7 +180,7 @@ describe("loadHooks", () => {
   test("returns empty config when no hooks files exist", () => {
     cleanup();
     mkdirSync(testDir, { recursive: true });
-    const hooks = loadHooks(testDir);
+    const hooks = loadHooks(testDir, { homeDir: fakeHome });
     expect(hooks.PreToolUse).toBeUndefined();
     expect(hooks.PostToolUse).toBeUndefined();
     cleanup();
@@ -187,7 +191,7 @@ describe("loadHooks", () => {
     const dir = join(testDir, ".claude");
     mkdirSync(dir, { recursive: true });
     writeFileSync(join(dir, "settings.json"), "not json{{{");
-    const hooks = loadHooks(testDir);
+    const hooks = loadHooks(testDir, { homeDir: fakeHome });
     expect(hooks.PreToolUse).toBeUndefined();
     cleanup();
   });
@@ -197,7 +201,7 @@ describe("loadHooks", () => {
     setup({
       ".claude/settings.json": { someOtherConfig: true },
     });
-    const hooks = loadHooks(testDir);
+    const hooks = loadHooks(testDir, { homeDir: fakeHome });
     expect(hooks.PreToolUse).toBeUndefined();
     cleanup();
   });
@@ -217,7 +221,7 @@ describe("loadHooks", () => {
       },
     });
 
-    const hooks = loadHooks(testDir);
+    const hooks = loadHooks(testDir, { homeDir: fakeHome });
     expect(hooks.PostToolUse).toHaveLength(1);
     expect(hooks.PostToolUse![0].hooks[0]).toEqual({
       type: "command",
@@ -245,7 +249,7 @@ describe("loadHooks", () => {
       },
     });
 
-    const hooks = loadHooks(testDir);
+    const hooks = loadHooks(testDir, { homeDir: fakeHome });
     expect(hooks.PreToolUse).toHaveLength(1);
     expect(hooks.PostToolUse).toHaveLength(1);
     expect(hooks.SessionStart).toHaveLength(1);
@@ -453,6 +457,8 @@ describe("runHooks", () => {
 
 describe("disableAllHooks", () => {
   const testDir = join(tmpdir(), `soulforge-hooks-disable-${Date.now()}`);
+  const fakeHome = join(tmpdir(), `soulforge-hooks-disable-home-${Date.now()}`);
+  mkdirSync(fakeHome, { recursive: true });
 
   function setup(files: Record<string, unknown>) {
     for (const [relPath, content] of Object.entries(files)) {
@@ -478,7 +484,7 @@ describe("disableAllHooks", () => {
       },
       ".claude/settings.local.json": { disableAllHooks: true },
     });
-    const hooks = loadHooks(testDir);
+    const hooks = loadHooks(testDir, { homeDir: fakeHome });
     expect(hooks.PreToolUse).toBeUndefined();
     cleanup();
   });
@@ -493,7 +499,7 @@ describe("disableAllHooks", () => {
       },
       ".soulforge/config.json": { disableAllHooks: true },
     });
-    const hooks = loadHooks(testDir);
+    const hooks = loadHooks(testDir, { homeDir: fakeHome });
     expect(hooks.PreToolUse).toBeUndefined();
     cleanup();
   });
@@ -508,7 +514,7 @@ describe("disableAllHooks", () => {
       },
       ".claude/settings.local.json": { disableAllHooks: false },
     });
-    const hooks = loadHooks(testDir);
+    const hooks = loadHooks(testDir, { homeDir: fakeHome });
     expect(hooks.PreToolUse).toHaveLength(1);
     cleanup();
   });

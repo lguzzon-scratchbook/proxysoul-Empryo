@@ -8,6 +8,9 @@
  * 4. `~/.soulforge/config.json`         (user-level SoulForge)
  * 5. `.soulforge/config.json`           (project-level SoulForge)
  *
+ * Set `SOULFORGE_NO_CLAUDE=1` to skip all `.claude` sources (hooks, skills,
+ * instructions) and load SoulForge-only config.
+ *
  * Caching: per-cwd with a 5s TTL. No file watchers — hooks config rarely changes
  * mid-session, and the TTL keeps it fresh enough without polling overhead.
  * Multi-tab safe: each cwd gets its own cache entry.
@@ -18,14 +21,22 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import type { HookEventName, HookRule, HooksConfig } from "./types.js";
 
-function getHookPaths(cwd: string): string[] {
-  const home = homedir();
+export function isClaudeCompatDisabled(): boolean {
+  return process.env.SOULFORGE_NO_CLAUDE === "1";
+}
+
+function getHookPaths(cwd: string, opts?: { homeDir?: string }): string[] {
+  const home = opts?.homeDir ?? homedir();
+  const soulforgePaths = [
+    join(home, ".soulforge", "config.json"),
+    join(cwd, ".soulforge", "config.json"),
+  ];
+  if (isClaudeCompatDisabled()) return soulforgePaths;
   return [
     join(home, ".claude", "settings.json"),
     join(cwd, ".claude", "settings.json"),
     join(cwd, ".claude", "settings.local.json"),
-    join(home, ".soulforge", "config.json"),
-    join(cwd, ".soulforge", "config.json"),
+    ...soulforgePaths,
   ];
 }
 
@@ -51,8 +62,8 @@ function readSettingsFile(filePath: string): SettingsFile | null {
  * Returns a merged HooksConfig where each event has all rules from all sources.
  * Returns empty config if any source sets `disableAllHooks: true`.
  */
-export function loadHooks(cwd: string): HooksConfig {
-  const paths = getHookPaths(cwd);
+export function loadHooks(cwd: string, opts?: { homeDir?: string }): HooksConfig {
+  const paths = getHookPaths(cwd, opts);
   const merged: Record<string, HookRule[]> = {};
 
   for (const path of paths) {

@@ -232,6 +232,7 @@ Built-ins already cover `.env`, `.pem`, `credentials`, `id_rsa`, `.npmrc`, `.net
 | Variable | Default | Purpose |
 |----------|---------|---------|
 | `SOULFORGE_NO_REPOMAP` | unset | Skip the repo-map scan at startup. |
+| `SOULFORGE_NO_CLAUDE` | unset | Skip all `.claude` sources (hooks, skills, `CLAUDE.md` instructions). Set to `1` for a clean SoulForge-only launch. |
 | `SOULFORGE_MAX_OUTPUT_TOKENS` | `64000` | Per-step output cap for all agents (forge + subagents + web-search). Raise for reasoning models that hit `finish_reason=length`. |
 | `SOULFORGE_PRESETS` | unset | Comma-separated preset specs to load on boot. Set automatically by `--plugin <spec>` flags. See [presets](#presets). |
 | `SOULFORGE_KEY_PRIORITY` | `env` | Key lookup order. `env` = env→keychain→file, `app` = keychain→file→env. |

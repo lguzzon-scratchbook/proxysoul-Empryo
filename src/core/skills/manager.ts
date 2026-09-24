@@ -120,21 +120,28 @@ export async function installSkill(
   return { installed: false, error: hint };
 }
 
-/** Scan known directories for installed SKILL.md files */
-export function listInstalledSkills(): InstalledSkill[] {
+/** Scan known directories for installed SKILL.md files.
+ * Set SOULFORGE_NO_CLAUDE=1 to skip ~/.claude/skills and .claude/skills. */
+export function listInstalledSkills(opts?: { cwd?: string }): InstalledSkill[] {
   const byName = new Map<string, InstalledSkill>();
   const seenPaths = new Set<string>();
 
   // Skill scan dirs are fixed per guidelines: ~/.soulforge/skills,
   // ~/.agents/skills, ~/.claude/skills + project-local equivalents.
   // Do not broaden scope.
+  const projectRoot = opts?.cwd ?? getCwd();
+  const skipClaude = process.env.SOULFORGE_NO_CLAUDE === "1";
   const dirs: Array<{ path: string; scope: "global" | "project" }> = [
     { path: join(homedir(), ".soulforge", "skills"), scope: "global" },
     { path: join(homedir(), ".agents", "skills"), scope: "global" },
-    { path: join(homedir(), ".claude", "skills"), scope: "global" },
-    { path: join(getCwd(), ".soulforge", "skills"), scope: "project" },
-    { path: join(getCwd(), ".agents", "skills"), scope: "project" },
-    { path: join(getCwd(), ".claude", "skills"), scope: "project" },
+    ...(!skipClaude
+      ? [{ path: join(homedir(), ".claude", "skills"), scope: "global" as const }]
+      : []),
+    { path: join(projectRoot, ".soulforge", "skills"), scope: "project" },
+    { path: join(projectRoot, ".agents", "skills"), scope: "project" },
+    ...(!skipClaude
+      ? [{ path: join(projectRoot, ".claude", "skills"), scope: "project" as const }]
+      : []),
   ];
 
   for (const dir of dirs) {
