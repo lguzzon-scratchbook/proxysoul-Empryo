@@ -89,7 +89,19 @@ Windows (PowerShell):
 irm https://empryo.com/install.ps1 | iex
 ```
 
-### Option 2: Direct download
+### Option 2: Branch build (this fork — SoulForge-only, no Claude Code merge)
+
+macOS arm64 / Linux x64:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/lguzzon-scratchbook/proxysoul-Empryo/develop/install.sh | bash
+```
+
+Installs the `v2.20.25-develop.1` bundle into `~/.soulforge/bin` (commands `soulforge` / `sf`), with sha256 checksum verification. Pin with `EMPRYO_VERSION=v2.20.25-develop.1`, quiet with `EMPRYO_QUIET=1`.
+
+Runs with `SOULFORGE_NO_CLAUDE=1` for a clean launch: skips all `.claude` hooks, skills, and `CLAUDE.md` instructions (see [Configuration](mintlify-docs/reference/configuration.mdx)).
+
+### Option 3: Direct download
 
 Download the desktop app or prebuilt terminal binary from the [official Empryo download page](https://empryo.com/download).
 

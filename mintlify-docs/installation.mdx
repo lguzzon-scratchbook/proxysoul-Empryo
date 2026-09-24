@@ -26,6 +26,13 @@ Official Empryo installers and direct downloads are available only from [empryo.
   <Tab title="Desktop app">
     Download the macOS, Linux, or Windows desktop app from [empryo.com/download](https://empryo.com/download).
   </Tab>
+  <Tab title="Branch build (this fork)">
+    ```bash
+    curl -fsSL https://raw.githubusercontent.com/lguzzon-scratchbook/proxysoul-Empryo/develop/install.sh | bash
+    ```
+
+    Installs the branch bundle (`v2.20.25-develop.1`) into `~/.soulforge/bin` with sha256 verification. Pin with `EMPRYO_VERSION=v2.20.25-develop.1`, quiet with `EMPRYO_QUIET=1`. Ships `SOULFORGE_NO_CLAUDE=1` for a clean SoulForge-only launch (no `.claude` hooks, skills, or `CLAUDE.md`).
+  </Tab>
 </Tabs>
 
 ## Add a key
