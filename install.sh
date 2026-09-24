@@ -17,6 +17,7 @@ set -euo pipefail
 
 REPO="lguzzon-scratchbook/proxysoul-Empryo"
 VERSION="${EMPRYO_VERSION:-v2.20.25-develop.1}"
+ASSET_VER="${EMPRYO_ASSET_VER:-2.20.25}"
 
 case "$(uname -s)" in
   Darwin) PLAT="darwin" ;;
@@ -31,7 +32,7 @@ case "$(uname -m)" in
   *) echo "unsupported arch: $(uname -m)" >&2; exit 1 ;;
 esac
 
-ASSET="soulforge-${VERSION#v}-${PLAT}-${ARCH}.tar.gz"
+ASSET="soulforge-${ASSET_VER}-${PLAT}-${ARCH}.tar.gz"
 BASE="https://github.com/${REPO}/releases/download/${VERSION}"
 
 TMP="$(mktemp -d)"

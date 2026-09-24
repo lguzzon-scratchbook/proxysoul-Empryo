@@ -12,12 +12,14 @@ $ErrorActionPreference = "Stop"
 $Version = $env:EMPRYO_VERSION
 if (-not $Version) { $Version = "v2.20.25-develop.1" }
 $repo = "lguzzon-scratchbook/proxysoul-Empryo"
+$assetVer = $env:EMPRYO_ASSET_VER
+if (-not $assetVer) { $assetVer = "2.20.25" }
 
 $arch = $env:PROCESSOR_ARCHITECTURE
 if ($env:PROCESSOR_ARCHITEW6432) { $arch = $env:PROCESSOR_ARCHITEW6432 }
 if ($arch -ne "AMD64") { Write-Error "need x64 (got $arch)"; exit 1 }
 
-$asset = "soulforge-$($Version -replace '^v','')-windows-x64.zip"
+$asset = "soulforge-$assetVer-windows-x64.zip"
 $url = "https://github.com/$repo/releases/download/$Version/$asset"
 $installDir = Join-Path $env:LOCALAPPDATA "SoulForge\bin"
 New-Item -ItemType Directory -Force -Path $installDir | Out-Null
